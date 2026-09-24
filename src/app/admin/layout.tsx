@@ -10,7 +10,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAdminAuth();
 
-  const isLoginPage = pathname === '/admin/login';
+  const isLoginPage = pathname ? pathname.startsWith('/admin/login') : false;
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !isLoginPage) {
@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [isAuthenticated, isLoading, isLoginPage, router]);
 
-  // If on login page, don't show admin sidebar/shell
+  // If on login page, render children directly
   if (isLoginPage) {
     return <>{children}</>;
   }

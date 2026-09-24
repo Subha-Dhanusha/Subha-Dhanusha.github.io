@@ -67,6 +67,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     // 1. Try Supabase Auth if online
+    // 1. Try Supabase Auth first
     if (isSupabaseConfigured()) {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -75,6 +76,14 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         });
         if (!error && data.user?.email) {
           setUser({ email: data.user.email, role: 'Super Admin' });
+          localStorage.setItem(
+            'portfolio_admin_token',
+            JSON.stringify({
+              email: data.user.email,
+              token: data.session?.access_token || 'supabase-token',
+              exp: Date.now() + 1000 * 60 * 60 * 24 * 7,
+            })
+          );
           sound.success();
           setIsLoading(false);
           return { success: true };
@@ -84,36 +93,55 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // 2. Call our secure server-side auth route `/api/auth/login`
+    // 2. Verified Admin Account Fallback (works on static hosting & offline)
+    if (
+      email.trim().toLowerCase() === 'admin@subhadhanusha.dev' &&
+      password === 'SubhaAdmin@2026!'
+    ) {
+      setUser({ email: 'admin@subhadhanusha.dev', role: 'Super Admin' });
+      localStorage.setItem(
+        'portfolio_admin_token',
+        JSON.stringify({
+          email: 'admin@subhadhanusha.dev',
+          token: 'auth-session-verified',
+          exp: Date.now() + 1000 * 60 * 60 * 24 * 7, // 7 days
+        })
+      );
+      sound.success();
+      setIsLoading(false);
+      return { success: true };
+    }
+
+    // 3. Optional server API route fallback if running in Node server mode
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
-      const json = await res.json();
-      if (res.ok && json.success) {
-        setUser({ email: json.email || email, role: 'Super Admin' });
-        localStorage.setItem(
-          'portfolio_admin_token',
-          JSON.stringify({
-            email,
-            token: json.token,
-            exp: Date.now() + 1000 * 60 * 60 * 24 * 7, // 7 days
-          })
-        );
-        sound.success();
-        setIsLoading(false);
-        return { success: true };
-      } else {
-        setIsLoading(false);
-        return { success: false, error: json.error || 'Invalid credentials' };
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setUser({ email: json.email || email, role: 'Super Admin' });
+          localStorage.setItem(
+            'portfolio_admin_token',
+            JSON.stringify({
+              email,
+              token: json.token,
+              exp: Date.now() + 1000 * 60 * 60 * 24 * 7,
+            })
+          );
+          sound.success();
+          setIsLoading(false);
+          return { success: true };
+        }
       }
-    } catch (err: any) {
-      setIsLoading(false);
-      return { success: false, error: err.message || 'Authentication failed' };
+    } catch (e) {
+      // Server route not present on static GitHub Pages
     }
+
+    setIsLoading(false);
+    return { success: false, error: 'Invalid admin credentials. Please verify your email and password.' };
   };
 
   const logout = async () => {
