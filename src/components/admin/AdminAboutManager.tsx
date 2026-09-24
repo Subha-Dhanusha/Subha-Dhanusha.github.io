@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { AboutSection, DomainId } from '@/types/portfolio';
 import { Save, Check } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
+import { executeAdminMutation } from '@/lib/data/client-mutations';
 
 interface AboutManagerProps {
   initialAbouts: Record<DomainId, AboutSection>;
@@ -40,21 +41,17 @@ export default function AdminAboutManager({ initialAbouts }: AboutManagerProps) 
     sound.click();
 
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'UPDATE_ABOUT',
-          payload: { ...activeAbout, domain_id: selectedDomain },
-        }),
+      const res = await executeAdminMutation('UPDATE_ABOUT', {
+        ...activeAbout,
+        domain_id: selectedDomain,
       });
 
-      if (res.ok) {
+      if (res.success) {
         sound.success();
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 2500);
       } else {
-        alert('Failed to update about section.');
+        alert('Failed to update about section: ' + (res.error || 'Check network connection'));
       }
     } catch (err: any) {
       alert(err.message || 'Error occurred');

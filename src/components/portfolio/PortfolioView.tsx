@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FullPortfolioData, DomainId } from '@/types/portfolio';
 import { useDomain } from '@/context/DomainContext';
+import { fetchLiveClientPortfolio } from '@/lib/data/client-portfolio';
 import Navbar from '@/components/ui/Navbar';
 import DomainSwitcher from '@/components/ui/DomainSwitcher';
 import Hero from '@/components/ui/Hero';
@@ -22,15 +23,32 @@ interface PortfolioViewProps {
 }
 
 export default function PortfolioView({ initialData }: PortfolioViewProps) {
-  const { currentDomain } = useDomain();
+  const { currentDomain, updateDomains } = useDomain();
+  const [data, setData] = useState<FullPortfolioData>(initialData);
+
+  useEffect(() => {
+    fetchLiveClientPortfolio(initialData).then((live) => {
+      setData(live);
+      if (live.domains && live.domains.length > 0) {
+        updateDomains(live.domains);
+      }
+    });
+
+    const handleUpdate = () => {
+      fetchLiveClientPortfolio(initialData).then((live) => setData(live));
+    };
+
+    window.addEventListener('portfolio_data_updated', handleUpdate);
+    return () => window.removeEventListener('portfolio_data_updated', handleUpdate);
+  }, [initialData, updateDomains]);
 
   // Dynamically resolve active domain content
-  const activeHero = initialData.heroSections[currentDomain] || initialData.heroSections['ai-ml'];
-  const activeAbout = initialData.aboutSections[currentDomain] || initialData.aboutSections['ai-ml'];
-  const activeResume = initialData.resumes[currentDomain] || initialData.resumes['ai-ml'];
+  const activeHero = data.heroSections[currentDomain] || data.heroSections['ai-ml'] || initialData.heroSections['ai-ml'];
+  const activeAbout = data.aboutSections[currentDomain] || data.aboutSections['ai-ml'] || initialData.aboutSections['ai-ml'];
+  const activeResume = data.resumes[currentDomain] || data.resumes['ai-ml'] || initialData.resumes['ai-ml'];
 
   // Filter & sort projects for current domain
-  const domainProjects = initialData.projects.filter(p => {
+  const domainProjects = (data.projects || initialData.projects).filter(p => {
     if (p.status !== 'published') return false;
     return !p.domain_ids || p.domain_ids.includes(currentDomain);
   }).sort((a, b) => {
@@ -48,13 +66,13 @@ export default function PortfolioView({ initialData }: PortfolioViewProps) {
       <main className="flex-1">
         <Hero
           hero={activeHero}
-          profile={initialData.profile}
+          profile={data.profile || initialData.profile}
           resumeUrl={activeResume?.file_url || '/resumes/Subha_Dhanusha_AI_ML_Resume.pdf'}
         />
 
         <About
           about={activeAbout}
-          profile={initialData.profile}
+          profile={data.profile || initialData.profile}
         />
 
         <ProjectGrid
@@ -62,31 +80,31 @@ export default function PortfolioView({ initialData }: PortfolioViewProps) {
         />
 
         <ExperienceTimeline
-          experiences={initialData.experiences}
+          experiences={data.experiences || initialData.experiences}
         />
 
         <SkillsGrid
-          skills={initialData.skills}
+          skills={data.skills || initialData.skills}
         />
 
         <EducationSection
-          education={initialData.education}
+          education={data.education || initialData.education}
         />
 
         <CertificationsSection
-          certifications={initialData.certifications}
+          certifications={data.certifications || initialData.certifications}
         />
 
         <AchievementsSection
-          achievements={initialData.achievements}
+          achievements={data.achievements || initialData.achievements}
         />
 
         <ResumeSection
-          resumes={initialData.resumes}
+          resumes={data.resumes || initialData.resumes}
         />
 
         <ContactSection
-          profile={initialData.profile}
+          profile={data.profile || initialData.profile}
         />
       </main>
 

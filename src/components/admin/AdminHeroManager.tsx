@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { HeroSection, DomainId } from '@/types/portfolio';
 import { Sparkles, Save, Check } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
+import { executeAdminMutation } from '@/lib/data/client-mutations';
 
 interface HeroManagerProps {
   initialHeroes: Record<DomainId, HeroSection>;
@@ -44,21 +45,17 @@ export default function AdminHeroManager({ initialHeroes }: HeroManagerProps) {
     sound.click();
 
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'UPDATE_HERO',
-          payload: { ...activeHero, domain_id: selectedDomain },
-        }),
+      const res = await executeAdminMutation('UPDATE_HERO', {
+        ...activeHero,
+        domain_id: selectedDomain,
       });
 
-      if (res.ok) {
+      if (res.success) {
         sound.success();
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 2500);
       } else {
-        alert('Failed to update hero.');
+        alert('Failed to update hero: ' + (res.error || 'Please try again.'));
       }
     } catch (err: any) {
       alert(err.message || 'Error occurred');

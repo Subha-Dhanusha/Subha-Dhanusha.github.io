@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Experience } from '@/types/portfolio';
 import { Briefcase, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
+import { executeAdminMutation } from '@/lib/data/client-mutations';
 
 interface ExpManagerProps {
   initialExperiences: Experience[];
@@ -45,17 +46,15 @@ export default function AdminExperienceManager({ initialExperiences }: ExpManage
     if (!window.confirm(`Delete experience at "${company}"?`)) return;
     sound.click();
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_EXPERIENCE', payload: { id } }),
-      });
-      if (res.ok) {
+      const res = await executeAdminMutation('DELETE_EXPERIENCE', { id });
+      if (res.success) {
         setExperiences(prev => prev.filter(e => e.id !== id));
         showNotify(`Deleted experience at ${company}.`);
+      } else {
+        alert(res.error || 'Delete failed.');
       }
-    } catch (e) {
-      alert('Delete failed.');
+    } catch (e: any) {
+      alert('Delete failed: ' + (e.message || ''));
     }
   };
 
@@ -69,14 +68,9 @@ export default function AdminExperienceManager({ initialExperiences }: ExpManage
     sound.click();
 
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'SAVE_EXPERIENCE', payload: editingExp }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        const saved = data.data;
+      const res = await executeAdminMutation('SAVE_EXPERIENCE', editingExp);
+      if (res.success) {
+        const saved = res.data || editingExp;
         setExperiences(prev => {
           const index = prev.findIndex(item => item.id === saved.id);
           if (index >= 0) {
@@ -89,6 +83,8 @@ export default function AdminExperienceManager({ initialExperiences }: ExpManage
         sound.success();
         showNotify(`Saved experience at ${saved.company}.`);
         setEditingExp(null);
+      } else {
+        alert(res.error || 'Failed to save experience');
       }
     } catch (err: any) {
       alert(err.message || 'Error occurred');

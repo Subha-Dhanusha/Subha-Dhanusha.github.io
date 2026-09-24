@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Skill, DomainId } from '@/types/portfolio';
 import { Cpu, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
+import { executeAdminMutation } from '@/lib/data/client-mutations';
 
 interface SkillsManagerProps {
   initialSkills: Skill[];
@@ -44,17 +45,15 @@ export default function AdminSkillsManager({ initialSkills }: SkillsManagerProps
     if (!window.confirm(`Delete skill "${name}"?`)) return;
     sound.click();
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_SKILL', payload: { id } }),
-      });
-      if (res.ok) {
+      const res = await executeAdminMutation('DELETE_SKILL', { id });
+      if (res.success) {
         setSkills(prev => prev.filter(s => s.id !== id));
         showNotify(`Deleted ${name}.`);
+      } else {
+        alert(res.error || 'Delete failed.');
       }
-    } catch (e) {
-      alert('Delete failed.');
+    } catch (e: any) {
+      alert('Delete failed: ' + (e.message || ''));
     }
   };
 
@@ -68,14 +67,9 @@ export default function AdminSkillsManager({ initialSkills }: SkillsManagerProps
     sound.click();
 
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'SAVE_SKILL', payload: editingSkill }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        const saved = data.data;
+      const res = await executeAdminMutation('SAVE_SKILL', editingSkill);
+      if (res.success) {
+        const saved = res.data || editingSkill;
         setSkills(prev => {
           const index = prev.findIndex(item => item.id === saved.id);
           if (index >= 0) {
@@ -88,6 +82,8 @@ export default function AdminSkillsManager({ initialSkills }: SkillsManagerProps
         sound.success();
         showNotify(`Saved skill ${saved.name}.`);
         setEditingSkill(null);
+      } else {
+        alert(res.error || 'Failed to save skill');
       }
     } catch (err: any) {
       alert(err.message || 'Error occurred');

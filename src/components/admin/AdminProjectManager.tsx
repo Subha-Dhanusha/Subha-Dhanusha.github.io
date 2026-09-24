@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Project, DomainId } from '@/types/portfolio';
 import { Plus, Edit2, Trash2, ExternalLink, Sparkles, Check, X, Eye } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
+import { executeAdminMutation } from '@/lib/data/client-mutations';
 
 interface ProjectManagerProps {
   initialProjects: Project[];
@@ -53,17 +54,15 @@ export default function AdminProjectManager({ initialProjects }: ProjectManagerP
     if (!window.confirm(`Are you sure you want to delete "${title}"?`)) return;
     sound.click();
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_PROJECT', payload: { id } }),
-      });
-      if (res.ok) {
+      const res = await executeAdminMutation('DELETE_PROJECT', { id });
+      if (res.success) {
         setProjects(prev => prev.filter(p => p.id !== id));
         showNotify(`Deleted "${title}" successfully.`);
+      } else {
+        alert(res.error || 'Delete failed.');
       }
-    } catch (e) {
-      alert('Delete failed.');
+    } catch (e: any) {
+      alert('Delete failed: ' + (e.message || ''));
     }
   };
 
@@ -85,14 +84,9 @@ export default function AdminProjectManager({ initialProjects }: ProjectManagerP
     };
 
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'SAVE_PROJECT', payload: projectPayload }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        const saved = data.data;
+      const res = await executeAdminMutation('SAVE_PROJECT', projectPayload);
+      if (res.success) {
+        const saved = res.data || projectPayload;
         setProjects(prev => {
           const index = prev.findIndex(p => p.id === saved.id || p.slug === saved.slug);
           if (index >= 0) {
@@ -106,7 +100,7 @@ export default function AdminProjectManager({ initialProjects }: ProjectManagerP
         showNotify(`Saved "${saved.title}" successfully.`);
         setEditingProject(null);
       } else {
-        alert(data.error || 'Failed to save project');
+        alert(res.error || 'Failed to save project');
       }
     } catch (err: any) {
       alert(err.message || 'Network error');

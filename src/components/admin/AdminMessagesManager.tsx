@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ContactMessage } from '@/types/portfolio';
 import { Mail, CheckCircle2, Clock, Trash2, Reply, Check } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
+import { executeAdminMutation } from '@/lib/data/client-mutations';
 
 interface MessagesManagerProps {
   initialMessages: ContactMessage[];
@@ -21,21 +22,16 @@ export default function AdminMessagesManager({ initialMessages }: MessagesManage
   const handleToggleStatus = async (id: string, updates: { is_read?: boolean; is_replied?: boolean }) => {
     sound.tick();
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'UPDATE_MESSAGE_STATUS',
-          payload: { id, updates },
-        }),
-      });
+      const res = await executeAdminMutation('UPDATE_MESSAGE_STATUS', { id, updates });
 
-      if (res.ok) {
+      if (res.success) {
         setMessages(prev => prev.map(m => (m.id === id ? { ...m, ...updates } : m)));
         showNotify('Updated message status.');
+      } else {
+        alert(res.error || 'Status update failed');
       }
-    } catch (e) {
-      alert('Status update failed');
+    } catch (e: any) {
+      alert('Status update failed: ' + (e.message || ''));
     }
   };
 
@@ -43,21 +39,16 @@ export default function AdminMessagesManager({ initialMessages }: MessagesManage
     if (!window.confirm('Are you sure you want to delete this message?')) return;
     sound.click();
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'DELETE_MESSAGE',
-          payload: { id },
-        }),
-      });
+      const res = await executeAdminMutation('DELETE_MESSAGE', { id });
 
-      if (res.ok) {
+      if (res.success) {
         setMessages(prev => prev.filter(m => m.id !== id));
         showNotify('Message deleted.');
+      } else {
+        alert(res.error || 'Delete failed');
       }
-    } catch (e) {
-      alert('Delete failed');
+    } catch (e: any) {
+      alert('Delete failed: ' + (e.message || ''));
     }
   };
 

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { SiteSettings, Profile } from '@/types/portfolio';
 import { Settings, Save, Check, Database, Globe, Mail, Phone, MapPin, Github, Linkedin } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
+import { executeAdminMutation } from '@/lib/data/client-mutations';
 
 interface SettingsProps {
   initialSettings: SiteSettings;
@@ -22,19 +23,17 @@ export default function AdminSettingsManager({ initialSettings, profile }: Setti
     sound.click();
 
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'UPDATE_SETTINGS',
-          payload: { ...settings, profile: prof },
-        }),
+      const res = await executeAdminMutation('UPDATE_SETTINGS', {
+        ...settings,
+        profile: prof,
       });
 
-      if (res.ok) {
+      if (res.success) {
         sound.success();
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 2500);
+      } else {
+        alert('Save failed: ' + (res.error || 'Please try again.'));
       }
     } catch (err: any) {
       alert(err.message || 'Save failed');

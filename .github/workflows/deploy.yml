@@ -35,6 +35,9 @@ jobs:
 
       - name: Build static site with Next.js
         run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://rxotyaatnwgggjzkbwff.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ4b3R5YWF0bndnZ2dqemtid2ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzEzNDQsImV4cCI6MjEwNTgwNzM0NH0.4jlq2DuhORPbgmLZLuB-Kqs83hDQU3Pmb1JgHsypoiw
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

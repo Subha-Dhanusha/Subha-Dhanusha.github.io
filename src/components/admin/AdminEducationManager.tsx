@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Education } from '@/types/portfolio';
 import { GraduationCap, Save, Check } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
+import { executeAdminMutation } from '@/lib/data/client-mutations';
 
 interface EduManagerProps {
   initialEducation: Education[];
@@ -32,19 +33,14 @@ export default function AdminEducationManager({ initialEducation }: EduManagerPr
     sound.click();
 
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'UPDATE_SETTINGS',
-          payload: { education: [edu] },
-        }),
-      });
+      const res = await executeAdminMutation('SAVE_EDUCATION', edu);
 
-      if (res.ok) {
+      if (res.success) {
         sound.success();
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 2500);
+      } else {
+        alert('Save failed: ' + (res.error || 'Please try again.'));
       }
     } catch (err: any) {
       alert(err.message || 'Save failed');

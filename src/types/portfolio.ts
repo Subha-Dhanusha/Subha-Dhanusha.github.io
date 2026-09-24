@@ -157,6 +157,7 @@ export interface Skill {
   category: 'Programming' | 'Machine Learning' | 'Data Engineering' | 'Data Analytics' | 'Databases' | 'Cloud' | 'Web' | 'Tools';
   proficiency: number;
   icon_name?: string;
+  is_featured?: boolean;
   display_order: number;
   domain_ids?: DomainId[];
   created_at?: string;

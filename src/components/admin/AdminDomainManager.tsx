@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Domain, DomainId } from '@/types/portfolio';
 import { Plus, Edit2, Trash2, Check, Sparkles, AlertCircle, Layers } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
+import { executeAdminMutation } from '@/lib/data/client-mutations';
 
 interface DomainManagerProps {
   initialDomains: Domain[];
@@ -71,18 +72,10 @@ export default function AdminDomainManager({ initialDomains }: DomainManagerProp
     }
 
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'SAVE_DOMAIN',
-          payload: domainToSave,
-        }),
-      });
+      const res = await executeAdminMutation('SAVE_DOMAIN', domainToSave);
 
-      if (res.ok) {
-        const { data } = await res.json();
-        const savedItem: Domain = data || domainToSave;
+      if (res.success) {
+        const savedItem: Domain = res.data || domainToSave;
         setDomains(prev => {
           const index = prev.findIndex(d => d.id === savedItem.id);
           if (index >= 0) {
@@ -96,10 +89,10 @@ export default function AdminDomainManager({ initialDomains }: DomainManagerProp
         setEditingDomain(null);
         setIsCreating(false);
       } else {
-        alert('Failed to save domain. Please try again.');
+        alert('Failed to save domain: ' + (res.error || 'Please try again.'));
       }
-    } catch (e) {
-      alert('Save operation failed.');
+    } catch (e: any) {
+      alert('Save operation failed: ' + (e.message || ''));
     } finally {
       setLoading(false);
     }
@@ -112,16 +105,9 @@ export default function AdminDomainManager({ initialDomains }: DomainManagerProp
     sound.click();
 
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'DELETE_DOMAIN',
-          payload: { id },
-        }),
-      });
+      const res = await executeAdminMutation('DELETE_DOMAIN', { id });
 
-      if (res.ok) {
+      if (res.success) {
         setDomains(prev => prev.filter(d => d.id !== id));
         sound.success();
         showNotify(`Domain "${name}" removed from database.`);
@@ -130,10 +116,10 @@ export default function AdminDomainManager({ initialDomains }: DomainManagerProp
           setIsCreating(false);
         }
       } else {
-        alert('Failed to delete domain.');
+        alert('Delete failed: ' + (res.error || 'Please try again.'));
       }
-    } catch (e) {
-      alert('Delete operation failed.');
+    } catch (e: any) {
+      alert('Delete failed: ' + (e.message || ''));
     }
   };
 

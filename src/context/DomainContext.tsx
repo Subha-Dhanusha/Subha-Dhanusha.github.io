@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { DomainId, Domain } from '@/types/portfolio';
 import { DOMAIN_THEMES } from '@/lib/data/initial-data';
 import { sound } from '@/lib/utils/sound';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
+import { getLocalPortfolioCache } from '@/lib/data/client-mutations';
 
 interface DomainContextType {
   currentDomain: DomainId;
@@ -66,15 +68,30 @@ export function DomainProvider({
     }
     setSoundEnabled(sound.isEnabled());
 
-    // Sync live domains from API / Supabase
-    fetch('/api/portfolio')
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.domains && Array.isArray(data.domains) && data.domains.length > 0) {
-          setDomains(data.domains);
-        }
-      })
-      .catch(() => {});
+    // Sync live domains from Supabase & Local Cache
+    const syncDomains = async () => {
+      const local = getLocalPortfolioCache();
+      if (local?.domains && local.domains.length > 0) {
+        setDomains(local.domains);
+      }
+      if (isSupabaseConfigured()) {
+        try {
+          const { data } = await supabase.from('domains').select('*').order('display_order');
+          if (data && data.length > 0) {
+            setDomains(data);
+          }
+        } catch (e) {}
+      }
+    };
+
+    syncDomains();
+
+    const handleUpdate = () => {
+      syncDomains();
+    };
+
+    window.addEventListener('portfolio_data_updated', handleUpdate);
+    return () => window.removeEventListener('portfolio_data_updated', handleUpdate);
   }, []);
 
   const activeTheme = resolveTheme(currentDomain, domains);

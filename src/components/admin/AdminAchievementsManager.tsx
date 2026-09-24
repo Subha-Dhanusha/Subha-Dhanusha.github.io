@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Achievement, DomainId } from '@/types/portfolio';
 import { Trophy, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
+import { executeAdminMutation } from '@/lib/data/client-mutations';
 
 interface AchManagerProps {
   initialAchievements: Achievement[];
@@ -52,17 +53,15 @@ export default function AdminAchievementsManager({ initialAchievements }: AchMan
     if (!window.confirm(`Delete achievement "${title}"?`)) return;
     sound.click();
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_ACHIEVEMENT', payload: { id } }),
-      });
-      if (res.ok) {
+      const res = await executeAdminMutation('DELETE_ACHIEVEMENT', { id });
+      if (res.success) {
         setAchievements(prev => prev.filter(a => a.id !== id));
         showNotify(`Deleted achievement.`);
+      } else {
+        alert(res.error || 'Delete failed.');
       }
-    } catch (e) {
-      alert('Delete failed.');
+    } catch (e: any) {
+      alert('Delete failed: ' + (e.message || ''));
     }
   };
 
@@ -76,14 +75,9 @@ export default function AdminAchievementsManager({ initialAchievements }: AchMan
     sound.click();
 
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'SAVE_ACHIEVEMENT', payload: editingAch }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        const saved = data.data;
+      const res = await executeAdminMutation('SAVE_ACHIEVEMENT', editingAch);
+      if (res.success) {
+        const saved = res.data || editingAch;
         setAchievements(prev => {
           const index = prev.findIndex(item => item.id === saved.id);
           if (index >= 0) {
@@ -96,6 +90,8 @@ export default function AdminAchievementsManager({ initialAchievements }: AchMan
         sound.success();
         showNotify(`Saved achievement.`);
         setIsModalOpen(false);
+      } else {
+        alert(res.error || 'Failed to save achievement');
       }
     } catch (err: any) {
       alert(err.message || 'Error occurred');

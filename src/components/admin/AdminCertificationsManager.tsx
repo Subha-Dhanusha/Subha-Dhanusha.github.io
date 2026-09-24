@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Certification, DomainId } from '@/types/portfolio';
 import { Award, Plus, Edit2, Trash2, Check, X, ExternalLink } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
+import { executeAdminMutation } from '@/lib/data/client-mutations';
 
 interface CertsManagerProps {
   initialCerts: Certification[];
@@ -52,17 +53,15 @@ export default function AdminCertificationsManager({ initialCerts }: CertsManage
     if (!window.confirm(`Delete certification "${title}"?`)) return;
     sound.click();
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_CERTIFICATION', payload: { id } }),
-      });
-      if (res.ok) {
+      const res = await executeAdminMutation('DELETE_CERTIFICATION', { id });
+      if (res.success) {
         setCerts(prev => prev.filter(c => c.id !== id));
         showNotify(`Deleted certification.`);
+      } else {
+        alert(res.error || 'Delete failed.');
       }
-    } catch (e) {
-      alert('Delete failed.');
+    } catch (e: any) {
+      alert('Delete failed: ' + (e.message || ''));
     }
   };
 
@@ -76,14 +75,9 @@ export default function AdminCertificationsManager({ initialCerts }: CertsManage
     sound.click();
 
     try {
-      const res = await fetch('/api/admin/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'SAVE_CERTIFICATION', payload: editingCert }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        const saved = data.data;
+      const res = await executeAdminMutation('SAVE_CERTIFICATION', editingCert);
+      if (res.success) {
+        const saved = res.data || editingCert;
         setCerts(prev => {
           const index = prev.findIndex(item => item.id === saved.id);
           if (index >= 0) {
@@ -96,6 +90,8 @@ export default function AdminCertificationsManager({ initialCerts }: CertsManage
         sound.success();
         showNotify(`Saved certification.`);
         setIsModalOpen(false);
+      } else {
+        alert(res.error || 'Failed to save certification');
       }
     } catch (err: any) {
       alert(err.message || 'Error occurred');
