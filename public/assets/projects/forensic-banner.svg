@@ -1,0 +1,38 @@
+<svg width="800" height="500" viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fbg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e091a"/>
+      <stop offset="100%" stop-color="#181028"/>
+    </linearGradient>
+    <linearGradient id="fviol" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" rx="24" fill="url(#fbg)"/>
+  <rect x="40" y="40" width="720" height="420" rx="16" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
+  <!-- Packet Nodes -->
+  <g transform="translate(80, 140)">
+    <rect width="170" height="120" rx="10" fill="#1e1b2e" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="20" y="35" font-family="monospace" font-size="12" fill="#a78bfa">PACKET CAPTURE</text>
+    <text x="20" y="65" font-family="monospace" font-size="10" fill="#94a3b8">Raw Dissection</text>
+    <text x="20" y="85" font-family="monospace" font-size="10" fill="#94a3b8">TCP / IP / UDP / DNS</text>
+  </g>
+  <g transform="translate(315, 140)">
+    <rect width="170" height="120" rx="10" fill="#1e1b2e" stroke="#ec4899" stroke-width="1.5"/>
+    <text x="20" y="35" font-family="monospace" font-size="12" fill="#f472b6">SHA-256 HASHING</text>
+    <text x="20" y="65" font-family="monospace" font-size="10" fill="#94a3b8">Cryptographic Seal</text>
+    <text x="20" y="85" font-family="monospace" font-size="10" fill="#94a3b8">Anti-Tampering</text>
+  </g>
+  <g transform="translate(550, 140)">
+    <rect width="170" height="120" rx="10" fill="#1e1b2e" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="20" y="35" font-family="monospace" font-size="12" fill="#60a5fa">CHAIN OF CUSTODY</text>
+    <text x="20" y="65" font-family="monospace" font-size="10" fill="#94a3b8">Immutable Audit Log</text>
+    <text x="20" y="85" font-family="monospace" font-size="10" fill="#94a3b8">Court-Admissible</text>
+  </g>
+  <!-- Connector arrows -->
+  <line x1="250" y1="200" x2="315" y2="200" stroke="url(#fviol)" stroke-width="3" stroke-dasharray="6 4"/>
+  <line x1="485" y1="200" x2="550" y2="200" stroke="url(#fviol)" stroke-width="3" stroke-dasharray="6 4"/>
+  <text x="80" y="420" font-family="sans-serif" font-size="22" font-weight="bold" fill="#ffffff">Network Forensic Investigation</text>
+  <text x="80" y="444" font-family="sans-serif" font-size="13" fill="#94a3b8">Packet-Level Analysis, Forensic Evidence Indexing and Custody Logging</text>
+</svg>
