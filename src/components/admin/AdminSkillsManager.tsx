@@ -5,13 +5,14 @@ import { Skill, DomainId } from '@/types/portfolio';
 import { Cpu, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
 import { executeAdminMutation } from '@/lib/data/client-mutations';
+import { useLiveAdminData } from '@/lib/hooks/useLiveAdminData';
 
 interface SkillsManagerProps {
   initialSkills: Skill[];
 }
 
 export default function AdminSkillsManager({ initialSkills }: SkillsManagerProps) {
-  const [skills, setSkills] = useState<Skill[]>(initialSkills);
+  const [skills, setSkills] = useLiveAdminData<Skill[]>('skills', initialSkills);
   const [editingSkill, setEditingSkill] = useState<Partial<Skill> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);

@@ -5,13 +5,14 @@ import { Project, DomainId } from '@/types/portfolio';
 import { Plus, Edit2, Trash2, ExternalLink, Sparkles, Check, X, Eye } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
 import { executeAdminMutation } from '@/lib/data/client-mutations';
+import { useLiveAdminData } from '@/lib/hooks/useLiveAdminData';
 
 interface ProjectManagerProps {
   initialProjects: Project[];
 }
 
 export default function AdminProjectManager({ initialProjects }: ProjectManagerProps) {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [projects, setProjects] = useLiveAdminData<Project[]>('projects', initialProjects);
   const [editingProject, setEditingProject] = useState<Partial<Project> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);

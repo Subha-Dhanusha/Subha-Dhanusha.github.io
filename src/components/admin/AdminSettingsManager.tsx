@@ -5,6 +5,7 @@ import { SiteSettings, Profile } from '@/types/portfolio';
 import { Settings, Save, Check, Database, Globe, Mail, Phone, MapPin, Github, Linkedin } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
 import { executeAdminMutation } from '@/lib/data/client-mutations';
+import { useLiveAdminData } from '@/lib/hooks/useLiveAdminData';
 
 interface SettingsProps {
   initialSettings: SiteSettings;
@@ -12,7 +13,7 @@ interface SettingsProps {
 }
 
 export default function AdminSettingsManager({ initialSettings, profile }: SettingsProps) {
-  const [settings, setSettings] = useState<SiteSettings>(initialSettings);
+  const [settings, setSettings] = useLiveAdminData<SiteSettings>('siteSettings' as any, initialSettings);
   const [prof, setProf] = useState<Profile>(profile);
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);

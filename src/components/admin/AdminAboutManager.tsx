@@ -5,13 +5,14 @@ import { AboutSection, DomainId } from '@/types/portfolio';
 import { Save, Check } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
 import { executeAdminMutation } from '@/lib/data/client-mutations';
+import { useLiveAdminData } from '@/lib/hooks/useLiveAdminData';
 
 interface AboutManagerProps {
   initialAbouts: Record<DomainId, AboutSection>;
 }
 
 export default function AdminAboutManager({ initialAbouts }: AboutManagerProps) {
-  const [abouts, setAbouts] = useState<Record<DomainId, AboutSection>>(initialAbouts);
+  const [abouts, setAbouts] = useLiveAdminData<Record<DomainId, AboutSection>>('aboutSections', initialAbouts);
   const [selectedDomain, setSelectedDomain] = useState<DomainId>('ai-ml');
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);

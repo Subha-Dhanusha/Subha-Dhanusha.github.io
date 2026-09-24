@@ -5,13 +5,14 @@ import { Domain, DomainId } from '@/types/portfolio';
 import { Plus, Edit2, Trash2, Check, Sparkles, AlertCircle, Layers } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
 import { executeAdminMutation } from '@/lib/data/client-mutations';
+import { useLiveAdminData } from '@/lib/hooks/useLiveAdminData';
 
 interface DomainManagerProps {
   initialDomains: Domain[];
 }
 
 export default function AdminDomainManager({ initialDomains }: DomainManagerProps) {
-  const [domains, setDomains] = useState<Domain[]>(initialDomains);
+  const [domains, setDomains] = useLiveAdminData<Domain[]>('domains', initialDomains);
   const [editingDomain, setEditingDomain] = useState<Domain | null>(null);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);

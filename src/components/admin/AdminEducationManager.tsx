@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Education } from '@/types/portfolio';
 import { GraduationCap, Save, Check } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
 import { executeAdminMutation } from '@/lib/data/client-mutations';
+import { useLiveAdminData } from '@/lib/hooks/useLiveAdminData';
 
 interface EduManagerProps {
   initialEducation: Education[];
 }
 
 export default function AdminEducationManager({ initialEducation }: EduManagerProps) {
+  const [educationList] = useLiveAdminData<Education[]>('education', initialEducation);
   const [edu, setEdu] = useState<Education>(initialEducation[0] || {
     id: 'edu-01',
     institution: 'Ramco Institute of Technology',
@@ -24,6 +26,12 @@ export default function AdminEducationManager({ initialEducation }: EduManagerPr
     achievements: [],
     display_order: 1,
   });
+
+  useEffect(() => {
+    if (educationList && educationList.length > 0) {
+      setEdu(educationList[0]);
+    }
+  }, [educationList]);
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 

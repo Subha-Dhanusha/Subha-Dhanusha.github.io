@@ -5,13 +5,14 @@ import { HeroSection, DomainId } from '@/types/portfolio';
 import { Sparkles, Save, Check } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
 import { executeAdminMutation } from '@/lib/data/client-mutations';
+import { useLiveAdminData } from '@/lib/hooks/useLiveAdminData';
 
 interface HeroManagerProps {
   initialHeroes: Record<DomainId, HeroSection>;
 }
 
 export default function AdminHeroManager({ initialHeroes }: HeroManagerProps) {
-  const [heroes, setHeroes] = useState<Record<DomainId, HeroSection>>(initialHeroes);
+  const [heroes, setHeroes] = useLiveAdminData<Record<DomainId, HeroSection>>('heroSections', initialHeroes);
   const [selectedDomain, setSelectedDomain] = useState<DomainId>('ai-ml');
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);

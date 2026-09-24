@@ -5,13 +5,14 @@ import { Achievement, DomainId } from '@/types/portfolio';
 import { Trophy, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
 import { executeAdminMutation } from '@/lib/data/client-mutations';
+import { useLiveAdminData } from '@/lib/hooks/useLiveAdminData';
 
 interface AchManagerProps {
   initialAchievements: Achievement[];
 }
 
 export default function AdminAchievementsManager({ initialAchievements }: AchManagerProps) {
-  const [achievements, setAchievements] = useState<Achievement[]>(initialAchievements);
+  const [achievements, setAchievements] = useLiveAdminData<Achievement[]>('achievements', initialAchievements);
   const [editingAch, setEditingAch] = useState<Partial<Achievement>>({
     id: '',
     title: '',

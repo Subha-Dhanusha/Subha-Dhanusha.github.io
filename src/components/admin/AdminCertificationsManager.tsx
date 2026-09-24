@@ -5,13 +5,14 @@ import { Certification, DomainId } from '@/types/portfolio';
 import { Award, Plus, Edit2, Trash2, Check, X, ExternalLink } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
 import { executeAdminMutation } from '@/lib/data/client-mutations';
+import { useLiveAdminData } from '@/lib/hooks/useLiveAdminData';
 
 interface CertsManagerProps {
   initialCerts: Certification[];
 }
 
 export default function AdminCertificationsManager({ initialCerts }: CertsManagerProps) {
-  const [certs, setCerts] = useState<Certification[]>(initialCerts);
+  const [certs, setCerts] = useLiveAdminData<Certification[]>('certifications', initialCerts);
   const [editingCert, setEditingCert] = useState<Partial<Certification>>({
     id: '',
     title: '',

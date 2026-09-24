@@ -5,13 +5,14 @@ import { Experience } from '@/types/portfolio';
 import { Briefcase, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
 import { executeAdminMutation } from '@/lib/data/client-mutations';
+import { useLiveAdminData } from '@/lib/hooks/useLiveAdminData';
 
 interface ExpManagerProps {
   initialExperiences: Experience[];
 }
 
 export default function AdminExperienceManager({ initialExperiences }: ExpManagerProps) {
-  const [experiences, setExperiences] = useState<Experience[]>(initialExperiences);
+  const [experiences, setExperiences] = useLiveAdminData<Experience[]>('experiences', initialExperiences);
   const [editingExp, setEditingExp] = useState<Partial<Experience> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);

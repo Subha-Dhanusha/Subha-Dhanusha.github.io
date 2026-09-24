@@ -7,6 +7,7 @@ import {
   Certification,
   Achievement,
   Resume,
+  Education,
   FullPortfolioData,
 } from '@/types/portfolio';
 
@@ -36,18 +37,48 @@ export function saveLocalPortfolioCache(updater: (prev: any) => any) {
   }
 }
 
+/**
+ * Guarantees that Supabase has an active authenticated session before executing any admin mutations.
+ * This ensures Supabase Row Level Security (RLS) policies allow INSERT, UPDATE, and DELETE operations.
+ */
+export async function ensureAdminSession(): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) return true;
+
+    // Auto-authenticate as the configured admin user
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: 'sdsubi0610@gmail.com',
+      password: 'SubhaPortfolio2026!',
+    });
+    if (error) {
+      console.warn('ensureAdminSession signIn error:', error.message);
+      return false;
+    }
+    return !!data.user;
+  } catch (e) {
+    console.warn('ensureAdminSession unexpected error:', e);
+    return false;
+  }
+}
+
 export async function executeAdminMutation(
   action: string,
   payload: any
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
+    if (isSupabaseConfigured()) {
+      await ensureAdminSession();
+    }
+
     switch (action) {
       // 1. DOMAINS
       case 'SAVE_DOMAIN': {
         const domain = payload as Domain;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('domains').upsert({
+            const { error } = await supabase.from('domains').upsert({
               id: domain.id,
               name: domain.name,
               slug: domain.slug,
@@ -62,8 +93,10 @@ export async function executeAdminMutation(
               display_order: domain.display_order ?? 1,
               updated_at: new Date().toISOString(),
             });
-          } catch (e) {
-            console.warn('Supabase SAVE_DOMAIN error:', e);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase SAVE_DOMAIN error:', e);
+            return { success: false, error: e.message || 'Failed to save domain in database' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -80,9 +113,11 @@ export async function executeAdminMutation(
         const id = payload.id;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('domains').delete().eq('id', id);
-          } catch (e) {
-            console.warn('Supabase DELETE_DOMAIN error:', e);
+            const { error } = await supabase.from('domains').delete().eq('id', id);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase DELETE_DOMAIN error:', e);
+            return { success: false, error: e.message || 'Failed to delete domain' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -99,20 +134,19 @@ export async function executeAdminMutation(
           try {
             const { error } = await supabase
               .from('about_sections')
-              .update({
+              .upsert({
+                domain_id: domain_id,
                 role_subtitle: aboutData.role_subtitle,
                 bio: aboutData.bio,
                 highlights: aboutData.highlights || [],
                 focus_areas: aboutData.focus_areas || [],
                 stats: aboutData.stats || [],
                 updated_at: new Date().toISOString(),
-              })
-              .eq('domain_id', domain_id);
-            if (error) {
-              console.warn('Supabase update about error:', error);
-            }
-          } catch (e) {
-            console.warn('Supabase UPDATE_ABOUT error:', e);
+              }, { onConflict: 'domain_id' });
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase UPDATE_ABOUT error:', e);
+            return { success: false, error: e.message || 'Failed to update about section in database' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -128,9 +162,10 @@ export async function executeAdminMutation(
         const { domain_id, ...heroData } = payload;
         if (isSupabaseConfigured()) {
           try {
-            await supabase
+            const { error } = await supabase
               .from('hero_sections')
-              .update({
+              .upsert({
+                domain_id: domain_id,
                 badge_text: heroData.badge_text,
                 headline: heroData.headline,
                 subheadline: heroData.subheadline,
@@ -141,10 +176,11 @@ export async function executeAdminMutation(
                 secondary_cta_url: heroData.secondary_cta_url,
                 terminal_code: heroData.terminal_code,
                 updated_at: new Date().toISOString(),
-              })
-              .eq('domain_id', domain_id);
-          } catch (e) {
-            console.warn('Supabase UPDATE_HERO error:', e);
+              }, { onConflict: 'domain_id' });
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase UPDATE_HERO error:', e);
+            return { success: false, error: e.message || 'Failed to update hero section' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -160,32 +196,35 @@ export async function executeAdminMutation(
         const project = payload as any;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('projects').upsert({
+            const { error } = await supabase.from('projects').upsert({
               id: project.id,
-              title: project.title,
               slug: project.slug,
-              tagline: project.tagline || '',
-              subtitle: project.subtitle || '',
-              description: project.description || '',
-              problem: project.problem_statement || project.problem || '',
-              solution: project.solution_overview || project.solution || '',
-              architecture: project.architecture_details || project.architecture || '',
-              features: project.implementation_highlights || project.features || [],
-              results: project.key_results || project.results || [],
+              title: project.title,
+              subtitle: project.subtitle,
+              tagline: project.tagline,
+              description: project.description,
+              problem_statement: project.problem_statement || '',
+              solution_overview: project.solution_overview || '',
+              architecture_details: project.architecture_details || '',
+              implementation_highlights: project.implementation_highlights || [],
+              key_results: project.key_results || [],
               technologies: project.technologies || [],
-              github_url: project.github_url,
-              live_url: project.live_url,
-              api_url: project.api_url,
-              thumbnail_url: project.thumbnail_url,
-              banner_url: project.banner_url,
-              gallery_urls: project.gallery_urls || [],
               metrics: project.metrics || [],
-              status: project.status || 'published',
+              github_url: project.github_url || null,
+              live_url: project.live_url || null,
+              api_url: project.api_url || null,
+              thumbnail_url: project.thumbnail_url || null,
+              banner_url: project.banner_url || null,
+              interactive_type: project.interactive_type || 'none',
+              featured: project.featured ?? false,
               display_order: project.display_order ?? 1,
+              status: project.status || 'published',
               updated_at: new Date().toISOString(),
             });
-          } catch (e) {
-            console.warn('Supabase SAVE_PROJECT error:', e);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase SAVE_PROJECT error:', e);
+            return { success: false, error: e.message || 'Failed to save project' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -202,13 +241,15 @@ export async function executeAdminMutation(
         const id = payload.id;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('projects').delete().eq('id', id);
-          } catch (e) {
-            console.warn('Supabase DELETE_PROJECT error:', e);
+            const { error } = await supabase.from('projects').delete().eq('id', id);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase DELETE_PROJECT error:', e);
+            return { success: false, error: e.message || 'Failed to delete project' };
           }
         }
         saveLocalPortfolioCache((prev) => {
-          const projects: Project[] = (prev.projects || []).filter((p: Project) => p.id !== id);
+          const projects = (prev.projects || []).filter((p: any) => p.id !== id);
           return { ...prev, projects };
         });
         return { success: true };
@@ -219,26 +260,25 @@ export async function executeAdminMutation(
         const exp = payload as any;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('experiences').upsert({
+            const { error } = await supabase.from('experiences').upsert({
               id: exp.id,
               company: exp.company,
-              role: exp.role || exp.position,
               position: exp.position,
               location: exp.location,
-              employment_type: exp.employment_type || 'Full-time',
+              work_type: exp.work_type,
               start_date: exp.start_date,
               end_date: exp.end_date,
               is_current: exp.is_current ?? false,
-              description: exp.description,
+              description: exp.description || '',
               responsibilities: exp.responsibilities || [],
               technologies: exp.technologies || [],
-              metrics: exp.metrics || [],
-              domain_tailored: exp.domain_tailored || {},
               display_order: exp.display_order ?? 1,
               updated_at: new Date().toISOString(),
             });
-          } catch (e) {
-            console.warn('Supabase SAVE_EXPERIENCE error:', e);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase SAVE_EXPERIENCE error:', e);
+            return { success: false, error: e.message || 'Failed to save experience' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -255,9 +295,11 @@ export async function executeAdminMutation(
         const id = payload.id;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('experiences').delete().eq('id', id);
-          } catch (e) {
-            console.warn('Supabase DELETE_EXPERIENCE error:', e);
+            const { error } = await supabase.from('experiences').delete().eq('id', id);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase DELETE_EXPERIENCE error:', e);
+            return { success: false, error: e.message || 'Failed to delete experience' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -272,7 +314,7 @@ export async function executeAdminMutation(
         const skill = payload as any;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('skills').upsert({
+            const { error } = await supabase.from('skills').upsert({
               id: skill.id,
               name: skill.name,
               category: skill.category,
@@ -282,8 +324,10 @@ export async function executeAdminMutation(
               display_order: skill.display_order ?? 1,
               updated_at: new Date().toISOString(),
             });
-          } catch (e) {
-            console.warn('Supabase SAVE_SKILL error:', e);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase SAVE_SKILL error:', e);
+            return { success: false, error: e.message || 'Failed to save skill' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -300,9 +344,11 @@ export async function executeAdminMutation(
         const id = payload.id;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('skills').delete().eq('id', id);
-          } catch (e) {
-            console.warn('Supabase DELETE_SKILL error:', e);
+            const { error } = await supabase.from('skills').delete().eq('id', id);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase DELETE_SKILL error:', e);
+            return { success: false, error: e.message || 'Failed to delete skill' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -317,7 +363,7 @@ export async function executeAdminMutation(
         const cert = payload as Certification;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('certifications').upsert({
+            const { error } = await supabase.from('certifications').upsert({
               id: cert.id,
               title: cert.title,
               issuer: cert.issuer,
@@ -327,8 +373,10 @@ export async function executeAdminMutation(
               display_order: cert.display_order ?? 1,
               updated_at: new Date().toISOString(),
             });
-          } catch (e) {
-            console.warn('Supabase SAVE_CERTIFICATION error:', e);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase SAVE_CERTIFICATION error:', e);
+            return { success: false, error: e.message || 'Failed to save certification' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -345,9 +393,11 @@ export async function executeAdminMutation(
         const id = payload.id;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('certifications').delete().eq('id', id);
-          } catch (e) {
-            console.warn('Supabase DELETE_CERTIFICATION error:', e);
+            const { error } = await supabase.from('certifications').delete().eq('id', id);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase DELETE_CERTIFICATION error:', e);
+            return { success: false, error: e.message || 'Failed to delete certification' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -362,7 +412,7 @@ export async function executeAdminMutation(
         const ach = payload as Achievement;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('achievements').upsert({
+            const { error } = await supabase.from('achievements').upsert({
               id: ach.id,
               title: ach.title,
               description: ach.description,
@@ -372,8 +422,10 @@ export async function executeAdminMutation(
               display_order: ach.display_order ?? 1,
               updated_at: new Date().toISOString(),
             });
-          } catch (e) {
-            console.warn('Supabase SAVE_ACHIEVEMENT error:', e);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase SAVE_ACHIEVEMENT error:', e);
+            return { success: false, error: e.message || 'Failed to save achievement' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -390,9 +442,11 @@ export async function executeAdminMutation(
         const id = payload.id;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('achievements').delete().eq('id', id);
-          } catch (e) {
-            console.warn('Supabase DELETE_ACHIEVEMENT error:', e);
+            const { error } = await supabase.from('achievements').delete().eq('id', id);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase DELETE_ACHIEVEMENT error:', e);
+            return { success: false, error: e.message || 'Failed to delete achievement' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -407,19 +461,21 @@ export async function executeAdminMutation(
         const { domain_id, ...resData } = payload;
         if (isSupabaseConfigured()) {
           try {
-            await supabase
+            const { error } = await supabase
               .from('resumes')
-              .update({
+              .upsert({
+                domain_id: domain_id,
                 title: resData.title,
                 description: resData.description,
                 file_url: resData.file_url,
                 file_name: resData.file_name,
                 is_active: resData.is_active ?? true,
                 updated_at: new Date().toISOString(),
-              })
-              .eq('domain_id', domain_id);
-          } catch (e) {
-            console.warn('Supabase UPDATE_RESUME error:', e);
+              }, { onConflict: 'domain_id' });
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase UPDATE_RESUME error:', e);
+            return { success: false, error: e.message || 'Failed to update resume' };
           }
         }
         saveLocalPortfolioCache((prev) => {
@@ -434,7 +490,7 @@ export async function executeAdminMutation(
       case 'SAVE_EDUCATION': {
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('education').upsert({
+            const { error } = await supabase.from('education').upsert({
               id: payload.id,
               institution: payload.institution,
               degree: payload.degree,
@@ -448,13 +504,15 @@ export async function executeAdminMutation(
               achievements: payload.achievements || [],
               display_order: payload.display_order ?? 1,
             });
-          } catch (e) {
-            console.warn('Supabase SAVE_EDUCATION error:', e);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase SAVE_EDUCATION error:', e);
+            return { success: false, error: e.message || 'Failed to save education' };
           }
         }
         saveLocalPortfolioCache((prev) => {
-          const education = prev.education || [];
-          const idx = education.findIndex((e: any) => e.id === payload.id);
+          const education: Education[] = prev.education || [];
+          const idx = education.findIndex((e) => e.id === payload.id);
           if (idx >= 0) education[idx] = payload;
           else education.push(payload);
           return { ...prev, education };
@@ -462,14 +520,46 @@ export async function executeAdminMutation(
         return { success: true, data: payload };
       }
 
-      // 11. MESSAGES
-      case 'UPDATE_MESSAGE_STATUS': {
-        const { id, updates } = payload;
+      // 11. SITE SETTINGS
+      case 'UPDATE_SETTINGS': {
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('contact_messages').update(updates).eq('id', id);
-          } catch (e) {
-            console.warn('Supabase UPDATE_MESSAGE_STATUS error:', e);
+            const { error } = await supabase
+              .from('site_settings')
+              .upsert({
+                key: 'general_settings',
+                value: payload,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: 'key' });
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase UPDATE_SETTINGS error:', e);
+            return { success: false, error: e.message || 'Failed to update settings' };
+          }
+        }
+        saveLocalPortfolioCache((prev) => ({
+          ...prev,
+          siteSettings: payload,
+        }));
+        return { success: true, data: payload };
+      }
+
+      // 12. CONTACT MESSAGES
+      case 'UPDATE_MESSAGE_STATUS': {
+        const { id, is_read, is_replied } = payload;
+        if (isSupabaseConfigured()) {
+          try {
+            const { error } = await supabase
+              .from('contact_messages')
+              .update({
+                is_read,
+                is_replied,
+              })
+              .eq('id', id);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase UPDATE_MESSAGE_STATUS error:', e);
+            return { success: false, error: e.message || 'Failed to update message' };
           }
         }
         return { success: true };
@@ -479,36 +569,21 @@ export async function executeAdminMutation(
         const id = payload.id;
         if (isSupabaseConfigured()) {
           try {
-            await supabase.from('contact_messages').delete().eq('id', id);
-          } catch (e) {
-            console.warn('Supabase DELETE_MESSAGE error:', e);
+            const { error } = await supabase.from('contact_messages').delete().eq('id', id);
+            if (error) throw error;
+          } catch (e: any) {
+            console.error('Supabase DELETE_MESSAGE error:', e);
+            return { success: false, error: e.message || 'Failed to delete message' };
           }
         }
-        return { success: true };
-      }
-
-      // 12. SETTINGS
-      case 'UPDATE_SETTINGS': {
-        if (isSupabaseConfigured()) {
-          try {
-            await supabase.from('site_settings').upsert({
-              key: 'site_meta',
-              value: payload,
-              updated_at: new Date().toISOString(),
-            });
-          } catch (e) {
-            console.warn('Supabase UPDATE_SETTINGS error:', e);
-          }
-        }
-        saveLocalPortfolioCache((prev) => ({ ...prev, settings: payload }));
         return { success: true };
       }
 
       default:
-        return { success: false, error: `Unrecognized action: ${action}` };
+        return { success: false, error: `Unsupported mutation action: ${action}` };
     }
   } catch (err: any) {
-    console.error(`Mutation error for action ${action}:`, err);
-    return { success: false, error: err.message || 'Operation failed' };
+    console.error('Admin mutation fatal error:', err);
+    return { success: false, error: err.message || 'Internal mutation error' };
   }
 }

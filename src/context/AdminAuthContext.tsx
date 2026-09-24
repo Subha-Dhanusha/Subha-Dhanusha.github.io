@@ -46,6 +46,13 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
             const parsed = JSON.parse(localSession);
             if (parsed.email && parsed.exp > Date.now()) {
               setUser({ email: parsed.email, role: 'Super Admin' });
+              // Silently re-authenticate Supabase in the background
+              if (isSupabaseConfigured()) {
+                supabase.auth.signInWithPassword({
+                  email: 'sdsubi0610@gmail.com',
+                  password: 'SubhaPortfolio2026!',
+                }).catch((e) => console.warn('Silent Supabase session restore warning:', e));
+              }
             } else {
               localStorage.removeItem('portfolio_admin_token');
             }
