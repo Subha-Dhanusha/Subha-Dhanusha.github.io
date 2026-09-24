@@ -94,15 +94,16 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // 2. Verified Admin Account Fallback (works on static hosting & offline)
+    const cleanEmail = email.trim().toLowerCase();
     if (
-      email.trim().toLowerCase() === 'admin@subhadhanusha.dev' &&
-      password === 'SubhaAdmin@2026!'
+      (cleanEmail === 'sdsubi0610@gmail.com' && password === 'SubhaPortfolio2026!') ||
+      (cleanEmail === 'admin@subhadhanusha.dev' && password === 'SubhaAdmin@2026!')
     ) {
-      setUser({ email: 'admin@subhadhanusha.dev', role: 'Super Admin' });
+      setUser({ email: cleanEmail, role: 'Super Admin' });
       localStorage.setItem(
         'portfolio_admin_token',
         JSON.stringify({
-          email: 'admin@subhadhanusha.dev',
+          email: cleanEmail,
           token: 'auth-session-verified',
           exp: Date.now() + 1000 * 60 * 60 * 24 * 7, // 7 days
         })
