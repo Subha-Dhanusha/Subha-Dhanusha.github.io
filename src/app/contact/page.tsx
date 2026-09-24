@@ -6,8 +6,6 @@ import DomainSwitcher from '@/components/ui/DomainSwitcher';
 import ContactSection from '@/components/ui/ContactSection';
 import Footer from '@/components/ui/Footer';
 
-export const dynamic = 'force-dynamic';
-
 export const metadata: Metadata = {
   title: 'Contact Subha Dhanusha P — Recruitment & Engineering Inquiries',
   description: 'Initiate a conversation with Subha Dhanusha P regarding AI/ML, Cloud Data Engineering, or Software development roles.',

@@ -6,8 +6,6 @@ import DomainSwitcher from '@/components/ui/DomainSwitcher';
 import ProjectGrid from '@/components/ui/ProjectGrid';
 import Footer from '@/components/ui/Footer';
 
-export const dynamic = 'force-dynamic';
-
 export const metadata: Metadata = {
   title: 'Engineering Projects & Case Studies — Subha Dhanusha P',
   description: 'Explore the full portfolio of engineering systems built by Subha Dhanusha P, including MediRisk AI, Stock Market Fundamental Analysis, and Network Forensics.',

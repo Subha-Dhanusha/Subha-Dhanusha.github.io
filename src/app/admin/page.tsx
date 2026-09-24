@@ -3,8 +3,6 @@ import { getPortfolioData, getContactMessages } from '@/lib/data/portfolio-servi
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminDashboardOverview from '@/components/admin/AdminDashboardOverview';
 
-export const dynamic = 'force-dynamic';
-
 export default async function AdminDashboardPage() {
   const data = await getPortfolioData();
   const messages = await getContactMessages();

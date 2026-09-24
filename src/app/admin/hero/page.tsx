@@ -3,8 +3,6 @@ import { getPortfolioData } from '@/lib/data/portfolio-service';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminHeroManager from '@/components/admin/AdminHeroManager';
 
-export const dynamic = 'force-dynamic';
-
 export default async function AdminHeroPage() {
   const data = await getPortfolioData();
 

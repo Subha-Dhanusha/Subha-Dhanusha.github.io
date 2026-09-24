@@ -117,8 +117,10 @@ export default function Hero({ hero, profile, resumeUrl }: HeroProps) {
               </a>
 
               <a
-                href={`/api/resumes/download/${currentDomain}`}
+                href={resumeUrl}
                 download
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => sound.click()}
                 onMouseEnter={() => sound.tick()}
                 className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl font-semibold text-sm border border-surface-border text-foreground hover:bg-surface/60 transition-all duration-300"

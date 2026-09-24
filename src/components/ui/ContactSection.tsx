@@ -5,6 +5,7 @@ import { useDomain } from '@/context/DomainContext';
 import { Profile } from '@/types/portfolio';
 import { Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle, Linkedin, Github, MessageSquare } from 'lucide-react';
 import { sound } from '@/lib/utils/sound';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 
 interface ContactProps {
   profile: Profile;
@@ -29,6 +30,35 @@ export default function ContactSection({ profile }: ContactProps) {
     setSuccess(false);
 
     try {
+      if (isSupabaseConfigured()) {
+        try {
+          const { error: sbError } = await supabase.from('messages').insert([
+            {
+              name: name.trim(),
+              email: email.trim().toLowerCase(),
+              subject: subject ? subject.trim() : `Inquiry regarding ${currentDomain} specialization`,
+              message: message.trim(),
+              domain_context: currentDomain,
+              is_read: false,
+              is_replied: false,
+            },
+          ]);
+
+          if (!sbError) {
+            setSuccess(true);
+            sound.success();
+            setName('');
+            setEmail('');
+            setSubject('');
+            setMessage('');
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.warn('Direct Supabase insert failed, attempting API route fallback...', e);
+        }
+      }
+
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -54,6 +84,7 @@ export default function ContactSection({ profile }: ContactProps) {
         sound.click();
       }
     } catch (err: any) {
+      if (success) return;
       setErrorMessage(err.message || 'Network error occurred.');
     } finally {
       setLoading(false);

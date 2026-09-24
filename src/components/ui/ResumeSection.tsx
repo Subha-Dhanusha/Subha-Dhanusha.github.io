@@ -82,8 +82,10 @@ export default function ResumeSection({ resumes }: ResumeSectionProps) {
               </a>
 
               <a
-                href={`/api/resumes/download/${currentDomain}`}
+                href={activeResume.file_url}
                 download
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => sound.click()}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-mono text-xs font-bold text-white transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg"
                 style={{

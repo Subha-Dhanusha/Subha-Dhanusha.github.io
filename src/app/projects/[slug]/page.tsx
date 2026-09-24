@@ -20,7 +20,12 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export async function generateStaticParams() {
+  const data = await getPortfolioData();
+  return data.projects.map((project) => ({
+    slug: project.slug,
+  }));
+}
 
 export async function generateMetadata({
   params,

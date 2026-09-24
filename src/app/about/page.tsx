@@ -9,8 +9,6 @@ import EducationSection from '@/components/ui/EducationSection';
 import AchievementsSection from '@/components/ui/AchievementsSection';
 import Footer from '@/components/ui/Footer';
 
-export const dynamic = 'force-dynamic';
-
 export const metadata: Metadata = {
   title: 'About Subha Dhanusha P — Engineering Profile & Academic Honors',
   description: 'Learn more about Subha Dhanusha P, AI & Data engineering student at Anna University / Ramco Institute of Technology, 3x department topper, and Neoteric AI Association Secretary.',

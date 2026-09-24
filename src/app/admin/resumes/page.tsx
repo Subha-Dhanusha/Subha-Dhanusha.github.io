@@ -3,8 +3,6 @@ import { getPortfolioData } from '@/lib/data/portfolio-service';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminResumeManager from '@/components/admin/AdminResumeManager';
 
-export const dynamic = 'force-dynamic';
-
 export default async function AdminResumesPage() {
   const data = await getPortfolioData();
 

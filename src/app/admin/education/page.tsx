@@ -3,8 +3,6 @@ import { getPortfolioData } from '@/lib/data/portfolio-service';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminEducationManager from '@/components/admin/AdminEducationManager';
 
-export const dynamic = 'force-dynamic';
-
 export default async function AdminEducationPage() {
   const data = await getPortfolioData();
 

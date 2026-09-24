@@ -3,8 +3,6 @@ import { Metadata } from 'next';
 import { getPortfolioData } from '@/lib/data/portfolio-service';
 import DomainRouteView from '@/components/portfolio/DomainRouteView';
 
-export const dynamic = 'force-dynamic';
-
 export const metadata: Metadata = {
   title: 'Subha Dhanusha P — Cloud Data Engineer | Dimensional Lakehouses & ETL Pipelines',
   description: 'Cloud Data Engineering portfolio of Subha Dhanusha P. Multi-tier data pipelines, Star Schema dimensional modeling, SQL window functions, and financial data processing.',
